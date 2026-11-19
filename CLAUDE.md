@@ -10,10 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint`: ESLint (flat config, `eslint-config-next`)
 - No test runner is set up yet. The Dec 1-5 tests will need one added.
 
-Env vars live in `.env.local` (gitignored): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Code architecture
-- Next.js 16 with `cacheComponents` and `partialPrefetching` on (`next.config.ts`). Tailwind v4 is loaded via a Turbopack CSS rule, not PostCSS. Import alias `@/*` = repo root.
+- Next.js 16 with `cacheComponents` and `partialPrefetching` on (`next.config.ts`; `experimental.agentFeedback` is also on, leave it). Tailwind v4 is loaded via a Turbopack CSS rule, not PostCSS. Import alias `@/*` = repo root.
 - `proxy.ts` (Next 16's replacement for `middleware.ts`) refreshes the Supabase login cookie and redirects logged-out users from `/nurse/*` to `/login`. Its matcher covers only `/nurse` and `/login`; `/track` skips it on purpose.
 - Three Supabase clients in `lib/supabase/`, pick by context:
   - `client.ts`: browser, anon key + user session (nurse/management UI).
