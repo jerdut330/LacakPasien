@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { logout } from "@/app/login/action";
 
 export default function NursePage() {
   return (
@@ -10,6 +11,10 @@ export default function NursePage() {
       <Suspense fallback={<p>Loading...</p>}>
         <Greeting />
       </Suspense>
+
+      <form action={logout}>
+        <button type="submit">Log out</button>
+        </form>
     </main>
   );
 }
