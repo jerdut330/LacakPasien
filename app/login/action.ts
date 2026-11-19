@@ -1,0 +1,30 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+
+export async function login(formData: FormData) {
+  const email = String(formData.get("email"));
+  const password = String(formData.get("password"));
+
+  const supabase = await createClient();
+
+  // 1. Check email + password
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return;
+
+  // 2. Look up their role
+  const { data: worker } = await supabase
+    .from("workers")
+    .select("role")
+    .eq("id", data.user.id)
+    .single();
+
+  // 3. Not a nurse? Log them out and stop
+  if (worker?.role !== "nurse") {
+    await supabase.auth.signOut();
+    return;
+  }
+
+  redirect("/nurse");
+}
