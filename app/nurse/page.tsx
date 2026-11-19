@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/login/action";
 import { minutesSince } from "@/lib/time";
+import Link from "next/link";
 
 type PatientRow = {
   patient_id: string;
@@ -69,7 +70,7 @@ async function PatientList() {
     <ul>
       {patients.map((p) => (
         <li key={p.patient_id}>
-          {p.patients?.name} · {p.status} · {minutesSince(p.last_updated)} min ago
+          <Link href={`/nurse/${p.patient_id}`}>{p.patients?.name}</Link> · {p.status} · {minutesSince(p.last_updated)} min ago
         </li>
       ))}
     </ul>
