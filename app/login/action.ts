@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+export type LoginState = { error: string } | null;
 
-export async function login(formData: FormData) {
+export async function login(prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email"));
   const password = String(formData.get("password"));
 
@@ -11,7 +12,7 @@ export async function login(formData: FormData) {
 
   // 1. Check email + password
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return;
+    if (error) return { error: "Incorrect Email or Password" };
 
   // 2. Look up their role
   const { data: worker } = await supabase
@@ -23,8 +24,9 @@ export async function login(formData: FormData) {
   // 3. Not a nurse? Log them out and stop
   if (worker?.role !== "nurse") {
     await supabase.auth.signOut();
-    return;
+    return { error: "This account doesn’t have nurse access." };
   }
 
   redirect("/nurse");
 }
+

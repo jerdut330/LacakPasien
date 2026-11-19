@@ -1,9 +1,15 @@
+"use client";
+
+import { useActionState } from "react";
 import { login } from "./action";
+
+
 export default function LoginPage() {
+    const [state, formAction, pending] = useActionState(login, null);   
   return (
     <main>
       <h1>Nurse login</h1>
-      <form action={login} >
+      <form action={formAction} >
         <label>
           Email
           <input name="email" type="email" required />
@@ -12,7 +18,13 @@ export default function LoginPage() {
           Password
           <input name="password" type="password" required />
         </label>
-        <button type="submit">Log in</button>
+
+        {state?.error && <p>{state.error}</p>}
+
+        <button type="submit" disabled={pending}>
+            {pending ? "Logging in..." : "Log in"}
+        </button>
+         
       </form>
     </main>
   );
