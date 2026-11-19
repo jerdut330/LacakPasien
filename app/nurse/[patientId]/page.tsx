@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { StatusForm } from "./status-form";
 
 type PatientDetailRow = {
   patient_id: string;
@@ -43,6 +44,11 @@ async function PatientDetail({ params }: { params: Promise<{ patientId: string }
       <p>Current status: {patient.status}</p>
       <p>Location: {patient.location ?? "-"}</p>
       <p>Bed type: {patient.bed_type ?? "-"}</p>
+        <StatusForm
+            patientId={patient.patient_id}
+            currentLocation={patient.location}
+            currentBedType={patient.bed_type}
+            />
     </section>
   );
 }
