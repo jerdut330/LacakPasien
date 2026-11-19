@@ -8,6 +8,7 @@ export type TrackInfo = {
   location: string | null;
   lastUpdated: string | null;
   minutesWaitingForBed: number | null;
+  minutesSinceUpdate: number | null;
 };
 
 export async function getTrackInfo(token: string): Promise<TrackInfo | null> {
@@ -40,5 +41,8 @@ export async function getTrackInfo(token: string): Promise<TrackInfo | null> {
     location: current?.location ?? null,
     lastUpdated: current?.last_updated ?? null,
     minutesWaitingForBed: current?.minutes_waiting_for_bed ?? null,
+    minutesSinceUpdate: current?.last_updated
+      ? Math.round((Date.now() - new Date(current.last_updated).getTime()) / 60000)
+      : null,
   };
 }
