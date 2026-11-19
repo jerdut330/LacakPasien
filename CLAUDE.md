@@ -19,6 +19,18 @@ Env vars live in `.env.local` (gitignored): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PU
   - `client.ts`: browser, anon key + user session (nurse/management UI).
   - `server.ts`: server components/actions/routes, anon key + cookie session, so RLS applies as the logged-in worker.
   - `admin.ts`: service role, `server-only`, bypasses RLS. Only for the family page and chatbot routes, after validating `qr_token`.
+- Where things live (the developer uses singular file names; keep that style):
+  - `app/login/action.ts`: `login` (useActionState) and `logout` server actions.
+  - `app/nurse/page.tsx`: greeting + active-patient list (`patient_current` minus final statuses, stalest first). `app/nurse/[patientId]/page.tsx` + `status-form.tsx` (client) + `app/nurse/action.ts` (`saveStatus`, inserts a `source = manual` row).
+  - `app/track/[token]/page.tsx` -> `lib/track.ts` (`getTrackInfo`): the only place family data is read with the admin client; returns first name + status fields only, never notes; null for unknown or expired tokens.
+  - `lib/option.ts`: STATUSES / LOCATIONS / BED_TYPES / NEEDS_BED_TYPE, mirroring the DB enums. Keep in sync with `001_lacakpasien_schema.sql`.
+  - `lib/time.ts`: `minutesSince()`.
+- Patterns that bite in this setup:
+  - Anything that reads cookies, params or the current time renders inside `<Suspense>`, and the async component starts with `await connection()`. Without it, Supabase auth's internal `Date.now()` triggers a "blocking-prerender-current-time" error (partial prefetching resolves cookies during prerender).
+  - Lint rule `react-hooks/purity` rejects `Date.now()` inside components: compute times in `lib/` (e.g. `minutesSince`).
+  - A `"use server"` file may export only async functions (types are fine). Shared constants go in a normal module.
+  - No generated DB types: embedded selects like `patients(name)` are mistyped as arrays, so add `.overrideTypes<Row[], { merge: false }>()` with a local row type.
+- Tooling quirk: when the built-in browser pane is hidden, React 19 never swaps Suspense fallbacks (no animation frames), so pages look stuck on "Loading...". Verify with `curl` or ask the developer to show the pane.
 
 # LacakPasien ("TrackPatient")
 
@@ -88,7 +100,8 @@ English-first UI with a Bahasa Indonesia option. Type mode and the chatbot work 
 - Before submitting: demo link works, screenshots show the real prototype, credits complete, no secrets, fallback video (the free LLM tier may fail during judging).
 
 ## Plan
-- Nov 21: thin slice: nurse login, tap-mode status update, family page /track/[token].
+- Nov 21: thin slice: nurse login, tap-mode status update, family page /track/[token]. DONE Nov 19. Tap-mode leftovers for polish week: Undo, friendly EN/ID status labels, bed type shown only when needed, likely next status first, stale-update flag, styling.
+- Before the chatbot experiment: developer writes ~20 test questions (typical / confusing / failure, EN + ID) with the expected behaviour, picks a free-tier LLM and puts its key in `.env.local` (name only in `.env.example`), and starts `BUILD_LOG.md`. Seed data is stale: reseed before realistic testing and before the demo.
 - Nov 22: chatbot prompt experiment: ~20 sample questions in a small script, before any chat UI.
 - Nov 23-30: type mode (AI field extraction + confirm card), chatbot with sources, wait-time estimate + AI explanation, family page polish. Stretch: "needs a human" alert. Feature freeze Nov 30.
 - Dec 1-5: tests (field extraction accuracy on 60-100 typed sentences in EN, ID and mixed; chatbot on 80-100 questions: typical, confusing and failure cases; wait-time logic test; escalation accuracy if built), 5-8 person trial (time per update, tap vs type).
