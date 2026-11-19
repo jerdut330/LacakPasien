@@ -1,5 +1,7 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
+import { minutesSince } from "@/lib/time";
+
 
 export type TrackInfo = {
   firstName: string;
@@ -41,8 +43,6 @@ export async function getTrackInfo(token: string): Promise<TrackInfo | null> {
     location: current?.location ?? null,
     lastUpdated: current?.last_updated ?? null,
     minutesWaitingForBed: current?.minutes_waiting_for_bed ?? null,
-    minutesSinceUpdate: current?.last_updated
-      ? Math.round((Date.now() - new Date(current.last_updated).getTime()) / 60000)
-      : null,
+    minutesSinceUpdate: minutesSince(current?.last_updated ?? null),
   };
 }
