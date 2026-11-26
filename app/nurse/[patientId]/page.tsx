@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StatusForm } from "./status-form";
+import { TypeForm } from "./type-form";
 
 type PatientDetailRow = {
   patient_id: string;
@@ -49,6 +50,7 @@ async function PatientDetail({ params }: { params: Promise<{ patientId: string }
             currentLocation={patient.location}
             currentBedType={patient.bed_type}
             />
+      <TypeForm patientId={patient.patient_id} />
     </section>
   );
 }

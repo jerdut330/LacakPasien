@@ -23,8 +23,10 @@ Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUB
   - `admin.ts`: service role, `server-only`, bypasses RLS. Only for the family page and chatbot routes, after validating `qr_token`.
 - Where things live (the developer uses singular file names; keep that style):
   - `app/login/action.ts`: `login` (useActionState) and `logout` server actions.
-  - `app/nurse/page.tsx`: greeting + active-patient list (`patient_current` minus final statuses, stalest first). `app/nurse/[patientId]/page.tsx` + `status-form.tsx` (client) + `app/nurse/action.ts` (`saveStatus`, inserts a `source = manual` row).
+  - `app/nurse/page.tsx`: greeting + active-patient list (`patient_current` minus final statuses, stalest first). `app/nurse/[patientId]/page.tsx` + `status-form.tsx` (client) + `app/nurse/action.ts` (`saveStatus`: inserts a new row, `source` manual or typed; `readSentence`: type-mode extraction, saves nothing). Type mode UI: `type-form.tsx` (sentence -> confirm card -> `saveStatus` with `raw_transcript` + `llm_output`).
   - `app/track/[token]/page.tsx` -> `lib/track.ts` (`getTrackInfo`): the only place family data is read with the admin client; returns first name + status fields only, never notes; null for unknown or expired tokens.
+  - Family chat: `app/track/[token]/chat-box.tsx` (client) -> `chat/route.ts` (POST, checks token via `getTrackInfo`, max 20 questions per token in memory) -> `lib/chatbot.ts` (`askChatbot`; sends status fields only, keeps only FAQ ids that exist).
+  - `lib/gemini.ts` (`generateJson`): the one Gemini caller; loads `prompts/<name>.md` + `.config.json`, retries the main model once after a 503, then the fallback. `lib/extract.ts` (`extractStatus`) and `lib/chatbot.ts` use it. Keep `scripts/*-experiment.mjs` in sync with them (same prompt, schema, retry), since their results stand for the app.
   - `lib/option.ts`: STATUSES / LOCATIONS / BED_TYPES / NEEDS_BED_TYPE, mirroring the DB enums. Keep in sync with `001_lacakpasien_schema.sql`.
   - `lib/time.ts`: `minutesSince()`.
 - Patterns that bite in this setup:
@@ -54,7 +56,7 @@ Next.js (App Router) + Supabase (Postgres, auth, realtime) + an LLM (free tier; 
 Rules: no paid service required; the live demo must work without anyone's personal keys; no secrets in the repo.
 
 ## Database (already created in Supabase, do not recreate)
-SQL files in `supabase/`: `001_lacakpasien_schema.sql`, `002_seed_faq.sql`, `003_seed_patients.sql`, `004_faq_fixes.sql` (FAQ edits from the chatbot hand check). New migrations take the next free number.
+SQL files in `supabase/`: `001_lacakpasien_schema.sql`, `002_seed_faq.sql`, `003_seed_patients.sql`, `004_faq_fixes.sql` (FAQ edits from the chatbot hand check), `005_typed_source.sql`. New migrations take the next free number.
 
 Enums:
 - bed_type: ward, hcu, icu
@@ -62,7 +64,7 @@ Enums:
 - patient_status: registered, in_triage, waiting_doctor, being_treated, waiting_results, waiting_bed, bed_assigned, transferring, moved_inpatient, discharged, referred, speak_to_staff
   - Final statuses: moved_inpatient, discharged, referred
 - worker_role: nurse, management
-- update_source: voice, manual. `typed` is NOT in the DB yet: add it in a new migration (next free number, e.g. `005_...sql`) (`alter type update_source add value 'typed';`) before building type mode.
+- update_source: voice, manual, typed (`typed` added by `005_typed_source.sql`).
 
 Tables:
 - workers (id = auth.users.id, name, role)

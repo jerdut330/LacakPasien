@@ -66,3 +66,21 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
 - Claude Code wrote, at the developer's request: `lib/chatbot.ts` (same prompt, config, JSON schema, retry and fallback as the test script), `app/track/[token]/chat/route.ts` (POST; checks the QR token with `getTrackInfo`, question 1-500 characters, max 20 questions per token kept in memory because the free tier is 500 calls a day for the whole app), `app/track/[token]/chat-box.tsx` (chat box with a "Sources" list: status update age + FAQ questions used).
 - Safety: the model gets only status, bed type, update age and wait estimate (no name, location or notes). FAQ ids from the model are kept only if they exist, so a made-up source can't show.
 - Checked: lint and build pass; no Supabase service key or Gemini key in `.next/static`. In the browser: Indonesian question about the bed wait + BPJS got an Indonesian answer with status + 2 FAQ sources. First try got 503 from all 3 attempts and showed the "chat is busy" message. Wrong token -> 404, empty question -> 400.
+
+## 2026-11-26: type mode, extraction experiment
+- `supabase/005_typed_source.sql`: adds `typed` to `update_source` (to run in Supabase).
+- Claude Code wrote, at the developer's request: extraction prompt `prompts/extract.md` + `prompts/extract.config.json` (gemini-3.5-flash-lite, temperature 0), 20 test sentences `tests/extraction-sentences.json` (EN, ID, mixed; includes "nunggu kamar" with no bed type, "kondisi memburuk" and "pasien meninggal" which must become speak_to_staff, and one prompt-injection sentence), script `scripts/extract-experiment.mjs`.
+- Weakness: the same author (Claude) wrote the prompt and these 20 sentences. The Dec 1-5 test set (60-100 sentences) should be written by the developer and, if possible, real nurses.
+- Output fields: status, bed_type, location, note, unsure (fields the model isn't sure about). Null = not stated; the nurse confirms every field before saving.
+- Run 1 (`tests/results/extract-2026-11-26T10-23-29-037Z.json`), 19 scored sentences + 1 injection case, 0 errors:
+  - Strict scoring (exact match): status 19/19, bed_type 18/19, location 15/19, note 16/19, all fields right 12/19.
+  - Scoring changed after looking at the misses, because it didn't match how the app saves: (1) a null location keeps the current location, so copying the current location counts as right; (2) an extra short note isn't an error, only a missing needed note is. Rescored same run: status 19/19, bed_type 18/19, location 18/19, note 19/19, all fields right 17/19.
+  - Still wrong: E06 gave bed_type "ward" for `transferring` (prompt says null; the app will clear bed_type for statuses that don't need it); E12 "labs back, doctor reviewing" guessed location "treatment" instead of keeping "lab".
+  - Safety cases: "kondisi memburuk" and "pasien meninggal" -> speak_to_staff with the details only in the staff note. Injection sentence -> status null, unsure ["status"]: nothing extracted.
+
+## 2026-11-26: type mode in the app
+- `005_typed_source.sql` run in Supabase by the developer; patients reseeded (200 patients, fresh times).
+- Claude Code wrote, at the developer's request: `lib/gemini.ts` (one shared Gemini caller with retry + fallback; the chatbot now uses it too), `lib/extract.ts`, `readSentence` server action, `saveStatus` extended for `source = typed` (+ notes, raw_transcript, llm_output), `app/nurse/[patientId]/type-form.tsx` (sentence -> confirm card -> Confirm).
+- The app clears bed_type for statuses that don't need it, keeps the current location when none is stated, and marks unsure fields "(check this)". The status has to be picked before Confirm works.
+- Tested in the browser as the nurse: "nunggu kamar ICU, di obs, keluarga nanya BPJS" -> card waiting_bed / icu / observation / note "keluarga nanya BPJS" -> Confirm -> new row with source typed, raw_transcript = the sentence, llm_output = the model's answer before any edit. The family chat for that patient then answered "waiting for a free ICU bed, last updated 0 minutes ago" (chatbot still works after the refactor).
+- Known gap: `llm_output` travels through the browser as a hidden form field before saving, so a nurse could in theory edit it. Fine for a demo; it only affects the accuracy metric, not patient data.
