@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build`: production build (also the type check)
 - `npm run lint`: ESLint (flat config, `eslint-config-next`)
 - No test runner is set up yet. The Dec 1-5 tests will need one added.
+- `node --env-file=.env.local scripts/chatbot-experiment.mjs [T01 F04 ...]`: runs the chatbot test cases (all, or the given ids) through Gemini with `prompts/chatbot.md` + `prompts/chatbot.config.json`, saves `tests/results/chatbot-<time>.json`. `pass` checks only the action; 503/timeouts are counted as errors, not fails. A full run is ~63 calls: mind the free-tier daily limit.
 - `tests/chatbot-questions.*`: the developer's chatbot test cases (same cases as `.md`, `.txt` and `.json`; the JSON has `expected` answer/refuse/escalate, `must_include`, `must_not` per case, for the Nov 22 prompt-experiment script to read).
 
 Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
