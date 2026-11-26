@@ -1,6 +1,7 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
 import { generateJson } from "@/lib/gemini";
+import { getWaitEstimate, describeWait } from "@/lib/wait";
 import type { TrackInfo } from "@/lib/track";
 
 // Same prompt, settings and output shape as scripts/chatbot-experiment.mjs,
@@ -36,18 +37,6 @@ const responseSchema = {
   required: ["action", "reply_language", "reply", "used_status", "faq_ids"],
 };
 
-// Placeholder until the wait-time feature: the assumption range only, no queue position yet.
-async function waitEstimate(info: TrackInfo): Promise<string | null> {
-  if (info.status !== "waiting_bed" || !info.bedType) return null;
-  const { data } = await admin
-    .from("wait_assumptions")
-    .select("min_minutes, max_minutes")
-    .eq("bed_type", info.bedType)
-    .maybeSingle();
-  if (!data) return null;
-  return `${data.min_minutes}-${data.max_minutes} minutes (assumption, not measured)`;
-}
-
 // Returns null when no model answered (free tier overloaded): the page then
 // tells the family to ask at the ER desk.
 export async function askChatbot(info: TrackInfo, question: string): Promise<ChatAnswer | null> {
@@ -59,7 +48,8 @@ export async function askChatbot(info: TrackInfo, question: string): Promise<Cha
     status: info.status,
     bed_type: info.bedType,
     updated_minutes_ago: info.minutesSinceUpdate,
-    wait_estimate: await waitEstimate(info),
+    // Worked out by plain code (lib/wait.ts); the model only explains it.
+    wait_estimate: describeWait(await getWaitEstimate(info.status, info.bedType, info.minutesWaitingForBed)),
   };
   const faqForModel = faq.map(({ id, topic, language, answer }) => ({ id, topic, language, answer }));
 
