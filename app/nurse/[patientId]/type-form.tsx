@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { readSentence, saveStatus, type ExtractResult } from "@/app/nurse/action";
-import { STATUSES, LOCATIONS, BED_TYPES, NEEDS_BED_TYPE } from "@/lib/option";
+import { STATUSES, LOCATIONS, BED_TYPES, NEEDS_BED_TYPE, word } from "@/lib/option";
 
 // Type mode: the nurse types one sentence, the AI fills the fields,
 // the nurse checks them and taps Confirm. Nothing is saved before that tap.
@@ -25,9 +25,9 @@ export function TypeForm({ patientId }: { patientId: string }) {
   }
 
   return (
-    <section>
-      <h2>Type it instead</h2>
-      <form onSubmit={read}>
+    <section className="flex flex-col gap-2 rounded-xl border border-neutral-400 p-3">
+      <h2 className="font-semibold">Type it instead</h2>
+      <form onSubmit={read} className="flex flex-col gap-2">
         <textarea
           value={sentence}
           onChange={(e) => setSentence(e.target.value)}
@@ -35,8 +35,9 @@ export function TypeForm({ patientId }: { patientId: string }) {
           rows={2}
           placeholder="e.g. waiting ICU bed, in observation, family asked about BPJS"
           aria-label="What happened, in one sentence"
+          className="rounded-lg border border-neutral-400 bg-transparent p-2"
         />
-        <button type="submit" disabled={reading || !sentence.trim()}>
+        <button type="submit" disabled={reading || !sentence.trim()} className="rounded-lg border border-foreground px-3 py-2 disabled:opacity-40">
           {reading ? "Reading..." : "Read sentence"}
         </button>
       </form>
@@ -65,8 +66,8 @@ function ConfirmCard({
   const check = (f: string) => (card.unsure.includes(f) ? " (check this)" : "");
 
   return (
-    <form action={formAction}>
-      <p>Check before saving. Nothing is saved until you tap Confirm.</p>
+    <form action={formAction} className="flex flex-col gap-2 [&_label]:flex [&_label]:flex-col [&_label]:text-sm [&_select]:rounded-lg [&_select]:border [&_select]:bg-transparent [&_select]:p-2 [&_input]:rounded-lg [&_input]:border [&_input]:bg-transparent [&_input]:p-2">
+      <p className="text-sm">Check before saving. Nothing is saved until you tap Confirm.</p>
       <input type="hidden" name="patient_id" value={patientId} />
       <input type="hidden" name="source" value="typed" />
       <input type="hidden" name="raw_transcript" value={sentence} />
@@ -77,7 +78,7 @@ function ConfirmCard({
         <select name="status" value={status} onChange={(e) => setStatus(e.target.value)} required>
           <option value="">- pick one -</option>
           {STATUSES.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>{word(s)}</option>
           ))}
         </select>
       </label>
@@ -99,7 +100,7 @@ function ConfirmCard({
         <select name="location" defaultValue={card.location ?? ""}>
           <option value="">-</option>
           {LOCATIONS.map((l) => (
-            <option key={l} value={l}>{l}</option>
+            <option key={l} value={l}>{word(l)}</option>
           ))}
         </select>
       </label>
@@ -110,7 +111,7 @@ function ConfirmCard({
       </label>
 
       {state?.error && <p>{state.error}</p>}
-      <button type="submit" disabled={pending || !status}>
+      <button type="submit" disabled={pending || !status} className="rounded-lg bg-foreground px-3 py-3 font-medium text-background disabled:opacity-40">
         {pending ? "Saving..." : "Confirm"}
       </button>
     </form>

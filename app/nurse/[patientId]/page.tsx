@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StatusForm } from "./status-form";
 import { TypeForm } from "./type-form";
+import { word } from "@/lib/option";
 
 type PatientDetailRow = {
   patient_id: string;
@@ -18,8 +19,8 @@ type PatientDetailRow = {
 
 export default function PatientPage({ params }: { params: Promise<{ patientId: string }> }) {
   return (
-    <main>
-      <Link href="/nurse">← Back to list</Link>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-4 p-4">
+      <Link href="/nurse" className="text-sm underline">← Back to list</Link>
       <Suspense fallback={<p>Loading...</p>}>
         <PatientDetail params={params} />
       </Suspense>
@@ -47,18 +48,23 @@ async function PatientDetail({ params }: { params: Promise<{ patientId: string }
   const qrSvg = await QRCode.toString(familyUrl, { type: "svg", margin: 1 });
 
   return (
-    <section>
-      <h1>{patient.patients?.name}</h1>
-      <p>Current status: {patient.status}</p>
-      <p>Location: {patient.location ?? "-"}</p>
-      <p>Bed type: {patient.bed_type ?? "-"}</p>
-        <StatusForm
-            patientId={patient.patient_id}
-            currentLocation={patient.location}
-            currentBedType={patient.bed_type}
-            />
+    <section className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-2xl font-semibold">{patient.patients?.name}</h1>
+        <p>
+          Now: <b>{word(patient.status)}</b>
+          {patient.bed_type && ` · ${patient.bed_type.toUpperCase()} bed`}
+          {patient.location && ` · ${word(patient.location)}`}
+        </p>
+      </div>
+      <StatusForm
+        patientId={patient.patient_id}
+        currentStatus={patient.status}
+        currentLocation={patient.location}
+        currentBedType={patient.bed_type}
+      />
       <TypeForm patientId={patient.patient_id} />
-      <details>
+      <details className="rounded-xl border border-neutral-400 p-3">
         <summary>Family link (QR code)</summary>
         {/* SVG made by the qrcode package from our own URL, not from user input */}
         <div

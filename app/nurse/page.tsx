@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/login/action";
 import { minutesSince } from "@/lib/time";
-import { ago } from "@/lib/label";
+import { ago, STALE_MINUTES } from "@/lib/label";
+import { word } from "@/lib/option";
 import Link from "next/link";
 
 type PatientRow = {
@@ -17,8 +18,8 @@ type PatientRow = {
 
 export default function NursePage() {
   return (
-    <main>
-      <h1>Nurse dashboard</h1>
+    <main className="mx-auto flex w-full max-w-md flex-col gap-3 p-4">
+      <h1 className="text-2xl font-semibold">Nurse dashboard</h1>
       <Suspense fallback={<p>Loading...</p>}>
         <Greeting />
       </Suspense>
@@ -28,7 +29,7 @@ export default function NursePage() {
       </Suspense>
 
       <form action={logout}>
-        <button type="submit">Log out</button>
+        <button type="submit" className="text-sm underline">Log out</button>
         </form>
     </main>
   );
@@ -68,12 +69,21 @@ async function PatientList() {
   }
 
   return (
-    <ul>
-      {patients.map((p) => (
-        <li key={p.patient_id}>
-          <Link href={`/nurse/${p.patient_id}`}>{p.patients?.name}</Link> · {p.status} · {ago(minutesSince(p.last_updated) ?? 0, "en")}
-        </li>
-      ))}
+    <ul className="flex flex-col gap-2">
+      {patients.map((p) => {
+        const mins = minutesSince(p.last_updated) ?? 0;
+        return (
+          <li key={p.patient_id}>
+            <Link href={`/nurse/${p.patient_id}`} className="flex flex-col rounded-lg border border-neutral-400 p-3">
+              <span className="font-medium">{p.patients?.name}</span>
+              <span className="text-sm">
+                {word(p.status)} · {ago(mins, "en")}
+                {mins > STALE_MINUTES && <b className="ml-2 rounded bg-amber-100 px-1 text-amber-900">stale</b>}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
