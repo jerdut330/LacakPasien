@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build`: production build (also the type check)
 - `npm run lint`: ESLint (flat config, `eslint-config-next`)
 - No test runner is set up yet. The Dec 1-5 tests will need one added.
+- `tests/chatbot-questions.*`: the developer's chatbot test cases (same cases as `.md`, `.txt` and `.json`; the JSON has `expected` answer/refuse/escalate, `must_include`, `must_not` per case, for the Nov 22 prompt-experiment script to read).
 
 Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
@@ -101,7 +102,7 @@ English-first UI with a Bahasa Indonesia option. Type mode and the chatbot work 
 
 ## Plan
 - Nov 21: thin slice: nurse login, tap-mode status update, family page /track/[token]. DONE Nov 19. Tap-mode leftovers for polish week: Undo, friendly EN/ID status labels, bed type shown only when needed, likely next status first, stale-update flag, styling.
-- Before the chatbot experiment: developer writes ~20 test questions (typical / confusing / failure, EN + ID) with the expected behaviour, picks a free-tier LLM and puts its key in `.env.local` (name only in `.env.example`), and starts `BUILD_LOG.md`. Seed data is stale: reseed before realistic testing and before the demo.
+- Before the chatbot experiment (test questions DONE, in `tests/`): developer writes ~20 test questions (typical / confusing / failure, EN + ID) with the expected behaviour, picks a free-tier LLM and puts its key in `.env.local` (name only in `.env.example`), and starts `BUILD_LOG.md`. Seed data is stale: reseed before realistic testing and before the demo.
 - Nov 22: chatbot prompt experiment: ~20 sample questions in a small script, before any chat UI.
 - Nov 23-30: type mode (AI field extraction + confirm card), chatbot with sources, wait-time estimate + AI explanation, family page polish. Stretch: "needs a human" alert. Feature freeze Nov 30.
 - Dec 1-5: tests (field extraction accuracy on 60-100 typed sentences in EN, ID and mixed; chatbot on 80-100 questions: typical, confusing and failure cases; wait-time logic test; escalation accuracy if built), 5-8 person trial (time per update, tap vs type).
