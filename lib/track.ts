@@ -9,8 +9,6 @@ export type TrackInfo = {
   status: string | null;
   bedType: string | null;
   location: string | null;
-  lastUpdated: string | null;
-  minutesWaitingForBed: number | null;
   minutesSinceUpdate: number | null;
   wait: WaitEstimate;
 };
@@ -44,8 +42,6 @@ export async function getTrackInfo(token: string): Promise<TrackInfo | null> {
     status: current?.status ?? null,
     bedType: current?.bed_type ?? null,
     location: current?.location ?? null,
-    lastUpdated: current?.last_updated ?? null,
-    minutesWaitingForBed,
     minutesSinceUpdate: minutesSince(current?.last_updated ?? null),
     wait: await getWaitEstimate(current?.status ?? null, current?.bed_type ?? null, minutesWaitingForBed),
   };

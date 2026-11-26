@@ -1,6 +1,5 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
-import { waitText } from "@/lib/label";
 
 // Wait-time estimate for a bed. Plain code, no AI: the numbers come from
 // wait_assumptions (PLACEHOLDER numbers, labelled as assumptions everywhere)
@@ -55,7 +54,3 @@ export async function getWaitEstimate(
   };
 }
 
-// The same estimate as one plain English sentence, for the chatbot's STATUS.
-export function describeWait(w: WaitEstimate): string | null {
-  return waitText(w, "en");
-}

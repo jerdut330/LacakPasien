@@ -4,8 +4,7 @@ export const STATUSES = [
   "waiting_doctor", "being_treated", 
   "waiting_results","waiting_bed", "bed_assigned", 
   "transferring", "moved_inpatient", "discharged", 
-  "referred", "speak_to_staff"
-  // ...all 12, in the order from CLAUDE.md
+  "referred", "speak_to_staff"
 ];
 
 export const LOCATIONS = [

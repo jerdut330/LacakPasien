@@ -99,3 +99,7 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
 - Decision: live updates by polling a server route (not Supabase Realtime), as the security rules require (anon has no database access).
 - Tested in the browser (phone size): EN and ID texts; a nurse tapping bed_assigned in another tab showed up on the family page within 5 s without a reload ("Tempat tidur sudah siap", "0 menit lalu", wait box gone); a 64-minute-old update shows the yellow warning.
 - Bug while testing: the ID wait box said "no estimate" because `npm run build` ran while the dev server was running and the dev server kept old code. Restarting fixed it; noted in CLAUDE.md.
+
+## 2026-11-26: cleanup pass and QR family link
+- Cleanup (Claude Code, "ponytail" review for unneeded code): home page `/` now just redirects to `/login` (was the create-next-app template); removed the 5 unused template images in `public/`; removed `lastUpdated` and `minutesWaitingForBed` from the data sent to the family page (unused there, so less data leaves the server); removed a one-line wrapper (`describeWait`).
+- QR family link: the nurse patient page has a "Family link (QR code)" section with the QR and the link. QR made on our server with the free `qrcode` npm package (no outside service). The link uses the address the page was opened on, so it works on localhost and when deployed. Checked: the link shown for Zahra matches her qr_token in the database.
