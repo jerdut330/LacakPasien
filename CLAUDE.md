@@ -25,6 +25,8 @@ Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUB
   - `app/login/action.ts`: `login` (useActionState) and `logout` server actions.
   - `app/nurse/page.tsx`: greeting + active-patient list (`patient_current` minus final statuses, stalest first). `app/nurse/[patientId]/page.tsx` + `status-form.tsx` (client) + `app/nurse/action.ts` (`saveStatus`: inserts a new row, `source` manual or typed; `readSentence`: type-mode extraction, saves nothing). Type mode UI: `type-form.tsx` (sentence -> confirm card -> `saveStatus` with `raw_transcript` + `llm_output`).
   - `app/track/[token]/page.tsx` -> `lib/track.ts` (`getTrackInfo`): the only place family data is read with the admin client; returns first name + status fields only, never notes; null for unknown or expired tokens.
+  - Family page: `page.tsx` renders the first status on the server, then `track-view.tsx` (client) polls `status/route.ts` (GET) every 5 s while visible, has the EN/ID switch and the stale warning (`STALE_MINUTES`). Family words live in `lib/label.ts` (status/bed/location labels, `waitText`); `resus` is shown as "Treatment area" on purpose.
+  - `lib/wait.ts` (`getWaitEstimate`, plain code): assumption range minus time waited, patients ahead as context. `getTrackInfo` includes it as `wait`.
   - Family chat: `app/track/[token]/chat-box.tsx` (client) -> `chat/route.ts` (POST, checks token via `getTrackInfo`, max 20 questions per token in memory) -> `lib/chatbot.ts` (`askChatbot`; sends status fields only, keeps only FAQ ids that exist).
   - `lib/gemini.ts` (`generateJson`): the one Gemini caller; loads `prompts/<name>.md` + `.config.json`, retries the main model once after a 503, then the fallback. `lib/extract.ts` (`extractStatus`) and `lib/chatbot.ts` use it. Keep `scripts/*-experiment.mjs` in sync with them (same prompt, schema, retry), since their results stand for the app.
   - `lib/option.ts`: STATUSES / LOCATIONS / BED_TYPES / NEEDS_BED_TYPE, mirroring the DB enums. Keep in sync with `001_lacakpasien_schema.sql`.
@@ -34,6 +36,7 @@ Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUB
   - Lint rule `react-hooks/purity` rejects `Date.now()` inside components: compute times in `lib/` (e.g. `minutesSince`).
   - A `"use server"` file may export only async functions (types are fine). Shared constants go in a normal module.
   - No generated DB types: embedded selects like `patients(name)` are mistyped as arrays, so add `.overrideTypes<Row[], { merge: false }>()` with a local row type.
+- Tooling quirk: don't run `npm run build` while `npm run dev` is running: both use `.next`, and the dev server then serves stale code (seen 2026-11-26). Stop dev first, or type-check with `npx tsc --noEmit`.
 - Tooling quirk: when the built-in browser pane is hidden, React 19 never swaps Suspense fallbacks (no animation frames), so pages look stuck on "Loading...". Verify with `curl` or ask the developer to show the pane.
 
 # LacakPasien ("TrackPatient")

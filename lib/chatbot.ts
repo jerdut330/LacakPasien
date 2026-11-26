@@ -1,7 +1,7 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
 import { generateJson } from "@/lib/gemini";
-import { getWaitEstimate, describeWait } from "@/lib/wait";
+import { describeWait } from "@/lib/wait";
 import type { TrackInfo } from "@/lib/track";
 
 // Same prompt, settings and output shape as scripts/chatbot-experiment.mjs,
@@ -49,7 +49,7 @@ export async function askChatbot(info: TrackInfo, question: string): Promise<Cha
     bed_type: info.bedType,
     updated_minutes_ago: info.minutesSinceUpdate,
     // Worked out by plain code (lib/wait.ts); the model only explains it.
-    wait_estimate: describeWait(await getWaitEstimate(info.status, info.bedType, info.minutesWaitingForBed)),
+    wait_estimate: describeWait(info.wait),
   };
   const faqForModel = faq.map(({ id, topic, language, answer }) => ({ id, topic, language, answer }));
 

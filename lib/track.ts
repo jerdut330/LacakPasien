@@ -1,6 +1,7 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
 import { minutesSince } from "@/lib/time";
+import { getWaitEstimate, type WaitEstimate } from "@/lib/wait";
 
 
 export type TrackInfo = {
@@ -11,6 +12,7 @@ export type TrackInfo = {
   lastUpdated: string | null;
   minutesWaitingForBed: number | null;
   minutesSinceUpdate: number | null;
+  wait: WaitEstimate;
 };
 
 export async function getTrackInfo(token: string): Promise<TrackInfo | null> {
@@ -36,13 +38,15 @@ export async function getTrackInfo(token: string): Promise<TrackInfo | null> {
     .maybeSingle();
 
   // 4. Hand back ONLY the safe fields
+  const minutesWaitingForBed = current?.minutes_waiting_for_bed ?? null;
   return {
     firstName: patient.name.split(" ")[0],
     status: current?.status ?? null,
     bedType: current?.bed_type ?? null,
     location: current?.location ?? null,
     lastUpdated: current?.last_updated ?? null,
-    minutesWaitingForBed: current?.minutes_waiting_for_bed ?? null,
+    minutesWaitingForBed,
     minutesSinceUpdate: minutesSince(current?.last_updated ?? null),
+    wait: await getWaitEstimate(current?.status ?? null, current?.bed_type ?? null, minutesWaitingForBed),
   };
 }

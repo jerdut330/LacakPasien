@@ -1,5 +1,6 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
+import { waitText } from "@/lib/label";
 
 // Wait-time estimate for a bed. Plain code, no AI: the numbers come from
 // wait_assumptions (PLACEHOLDER numbers, labelled as assumptions everywhere)
@@ -54,28 +55,7 @@ export async function getWaitEstimate(
   };
 }
 
-// The same estimate as one plain sentence, for the chatbot's STATUS and the family page.
+// The same estimate as one plain English sentence, for the chatbot's STATUS.
 export function describeWait(w: WaitEstimate): string | null {
-  if (!w) return null;
-  const bed = BED_LABEL[w.bedType] ?? `a ${w.bedType} bed`;
-  const ahead =
-    w.patientsAhead === 0
-      ? `No one else has been waiting longer for ${bed}`
-      : `${w.patientsAhead} other patient${w.patientsAhead === 1 ? " has" : "s have"} been waiting longer for ${bed}`;
-  if (w.kind === "longer_than_usual") {
-    return `Already waiting longer than the usual range for ${bed}, so no estimate; please ask the staff. ${ahead}.`;
-  }
-  const range =
-    w.minLeft === 0
-      ? `Up to ${formatMinutes(w.maxLeft)} more`
-      : `About ${formatMinutes(w.minLeft)} to ${formatMinutes(w.maxLeft)} more`;
-  return `${range} (estimate based on assumptions, not measured). ${ahead}.`;
-}
-
-const BED_LABEL: Record<string, string> = { ward: "a ward bed", hcu: "an HCU bed", icu: "an ICU bed" };
-
-function formatMinutes(m: number): string {
-  if (m < 60) return `${m} min`;
-  const h = m / 60;
-  return `${Number.isInteger(h) ? h : h.toFixed(1)} h`;
+  return waitText(w, "en");
 }
