@@ -45,7 +45,7 @@ A package-tracking-style web app that shows families the live status of a patien
   - Voice (bonus, only if time after the feature freeze): speech-to-text feeding the same extractor. `source = voice`.
 - Family scans a QR code -> opens /track/[token] -> sees status, wait-time range with explanation, "last updated X min ago". Updates live.
 - Family chatbot answers ONLY from that patient's current status + the FAQ table. Refuses medical questions and other patients' data. Every answer shows its sources (which status update and how old it is, which FAQ entries).
-- Stretch: "needs a human" alert. The chatbot classifies each question as answer / refuse / escalate; escalations show on the nurse page (e.g. "family wants to talk to doctor"). Needs a new table (004 migration), inserted only by the server route via the admin client; anon still has no access.
+- Stretch: "needs a human" alert. The chatbot classifies each question as answer / refuse / escalate; escalations show on the nurse page (e.g. "family wants to talk to doctor"). Needs a new table (new migration, next free number), inserted only by the server route via the admin client; anon still has no access.
 - Wait-time estimate: plain code computes a RANGE from wait_assumptions + patients ahead for the same bed type; the LLM only writes the explanation. Show "no estimate available" when data is missing.
 - Management page (build last): read-only. Patients waiting per bed type, longest waits (flag > 4 hours), stale updates, average boarding time.
 
@@ -54,7 +54,7 @@ Next.js (App Router) + Supabase (Postgres, auth, realtime) + an LLM (free tier; 
 Rules: no paid service required; the live demo must work without anyone's personal keys; no secrets in the repo.
 
 ## Database (already created in Supabase, do not recreate)
-SQL files in `supabase/`: `001_lacakpasien_schema.sql`, `002_seed_faq.sql`, `003_seed_patients.sql`.
+SQL files in `supabase/`: `001_lacakpasien_schema.sql`, `002_seed_faq.sql`, `003_seed_patients.sql`, `004_faq_fixes.sql` (FAQ edits from the chatbot hand check). New migrations take the next free number.
 
 Enums:
 - bed_type: ward, hcu, icu
@@ -62,14 +62,14 @@ Enums:
 - patient_status: registered, in_triage, waiting_doctor, being_treated, waiting_results, waiting_bed, bed_assigned, transferring, moved_inpatient, discharged, referred, speak_to_staff
   - Final statuses: moved_inpatient, discharged, referred
 - worker_role: nurse, management
-- update_source: voice, manual. `typed` is NOT in the DB yet: add it in a `004_...sql` migration (`alter type update_source add value 'typed';`) before building type mode.
+- update_source: voice, manual. `typed` is NOT in the DB yet: add it in a new migration (next free number, e.g. `005_...sql`) (`alter type update_source add value 'typed';`) before building type mode.
 
 Tables:
 - workers (id = auth.users.id, name, role)
 - patients (id, name, qr_token unique, arrived_at, token_expires_at). One row = one ER visit (no admissions table, on purpose).
 - status_updates (id, patient_id, status, bed_type, location, notes, source, raw_transcript, llm_output jsonb, updated_by -> workers, created_at). APPEND-ONLY: every update is a new row; never update old rows. Check constraint: bed_type required for waiting_bed, bed_assigned, moved_inpatient.
   - llm_output = what the LLM extracted BEFORE the nurse edited it. The columns hold the confirmed values. Comparing them = field accuracy metric. Always fill raw_transcript (typed text or speech transcript) + llm_output for typed and voice updates.
-- faq (id, question, answer, language 'id'|'en', topic). 19 topics x 2 languages. Fictional hospital.
+- faq (id, question, answer, language 'id'|'en', topic). 20 topics x 2 languages, 42 rows after 004 (bpjs has 2 questions per language). Fictional hospital.
 - wait_assumptions (bed_type, min_minutes, max_minutes). PLACEHOLDER numbers: label as assumptions in the UI and README.
 - View patient_current (security_invoker): latest status per patient + minutes_waiting_for_bed.
 - Trigger: inserting a final status sets patients.token_expires_at = created_at + 3 hours.

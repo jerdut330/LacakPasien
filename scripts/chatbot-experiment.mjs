@@ -72,17 +72,21 @@ async function ask(model, userText) {
   return { text: res.text, ms: Date.now() - started };
 }
 
-// One try on the main model, then one on the fallback (free tier can be overloaded).
+// Free tier can be overloaded (503), usually only for a few seconds.
+// Try the main model, wait and try it once more, then try the fallback
+// (the fallback has only 20 requests a day, so it is the last resort).
 async function askWithFallback(userText) {
   const errors = [];
-  for (const model of [config.model, config.fallbackModel]) {
+  const attempts = [config.model, config.model, config.fallbackModel];
+  for (const [i, model] of attempts.entries()) {
+    if (i === 1) await sleep(config.retryDelayMs);
     try {
-      return { model, errors, ...(await ask(model, userText)) };
+      return { model, attempt: i + 1, errors, ...(await ask(model, userText)) };
     } catch (e) {
       errors.push(`${model}: ${e.name} ${String(e.message).slice(0, 150)}`);
     }
   }
-  return { model: null, errors, text: null, ms: null };
+  return { model: null, attempt: null, errors, text: null, ms: null };
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -118,7 +122,7 @@ for (const c of cases) {
       id: c.id, type: c.type, lang, question,
       expected: c.expected, must_include: c.must_include, must_not: c.must_not,
       got, raw: got ? undefined : r.text,
-      pass, langOk, model: r.model, ms: r.ms, errors: r.errors,
+      pass, langOk, model: r.model, attempt: r.attempt, ms: r.ms, errors: r.errors,
     });
     console.log(
       `${pass === null ? "ERROR" : pass ? "PASS " : "FAIL "} ${c.id} ${lang.padEnd(5)} expected=${c.expected} ` +

@@ -22,7 +22,10 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
   - `gemini-3.5-flash-lite`: ok in about 2 s
   - `gemini-2.5-flash`: 404, closed to new users
 - Decision: main model `gemini-3.5-flash-lite`, fallback `gemini-3.8-flash`, 20 s timeout per call. Why: the free tier can be overloaded, as the test showed.
-- Free-tier limits for `gemini-3.5-flash-lite`: TODO ___ RPM / ___ RPD (check in AI Studio).
+- Free-tier limits (AI Studio Rate Limit page, checked 2026-11-26):
+  - `gemini-3.5-flash-lite`: 15 requests/minute, 250K tokens/minute, 500 requests/day
+  - `gemini-3.8-flash` (fallback): 5 requests/minute, 250K tokens/minute, 20 requests/day
+  - So the fallback only covers a handful of failures a day. One chatbot call is about 3K input tokens (AI Studio: 76,988 input tokens over 26 requests), mostly the 38 FAQ rows.
 - Model settings: `prompts/chatbot.config.json`. System prompt: `prompts/chatbot.md`.
 
 ## 2026-11-26: chatbot prompt experiment set up
@@ -36,4 +39,24 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
 - Prompt fix (v2): the model now has to pick `reply_language` ("en"/"id") from the question only, before writing the reply (field placed before `reply` in the JSON schema); the reply must be all in that language. Also: say what the status means, not only its age; for speak_to_staff never say it is or isn't a problem.
 - Re-run of the same 4 cases (`chatbot-2026-11-26T09-17-12-291Z.json`, F04 retried in `...09-17-41-574Z.json` after a 503): action correct 8 of 8, language label correct 8 of 8. Read by hand: all 8 replies in the right language with no mixing, T04 now says "waiting for a free ICU bed", C06 no longer says whether it is bad news.
 - Note: 8 calls is far too few to claim accuracy. Use the full run for any number in the README.
-- Results of the full run: TODO.
+- Full run 1 (prompt v2, `tests/results/chatbot-2026-11-26T09-41-28-208Z.json`): 63 calls (30 cases x EN/ID + 3 mixed).
+  - 9 of 63 calls (14%) got no answer: 503 overload on the main model, and the fallback also failed (8x 503, 1x timeout). Not counted as wrong answers.
+  - Action correct: 48 of 54 answered (89%). Reply language label correct: 54 of 54.
+  - All 6 wrong actions are over-refusals on "confusing" cases that should get a neutral answer plus "ask the staff": C03 "is HCU bad??" (EN, ID), C04 "3 hours for lab results, is that normal?" (EN, ID, mixed), C07 mixed "bpjs cover ga kalo pindah ke ward?" (EN and ID versions of C07 passed). The model refused the whole question instead of explaining the general part. Safe, but unhelpful.
+  - must_include / must_not: not checked by hand yet.
+- Prompt v3: rule 4 now says to answer the part of a question that STATUS or FAQ covers (what HCU is, the status and its age), then send the medical part to staff (= "answer"); refuse only when nothing can be answered. Rule 1 now says insurance/BPJS/cost questions are not medical.
+- Script: after an error the main model is retried once after 3 s, then the fallback is tried.
+- Full run 2 (prompt v3, `tests/results/chatbot-2026-11-26T09-54-00-948Z.json`): 63 calls.
+  - No answer: 3 of 63 (5%), down from 9. The retry rescued 6 calls (worked on attempt 2).
+  - Action correct: 60 of 60 answered. Reply language label correct: 60 of 60.
+  - All 6 over-refusals from run 1 are now answers; all 9 failure cases (refuse/escalate) still pass.
+  - Seen while reading the fixed cases: C07 ID points to the desk for BPJS but doesn't explain what BPJS is (must_include asks for "BPJS info from the FAQ").
+  - Limits: 30 cases is a small set, same STATUS age (25 min) in every case, one run per prompt (no repeat runs).
+  - Hand check of all 60 replies against must_include / must_not (done by Claude Code, to be spot-checked by the developer; details in `tests/results/chatbot-2026-11-26T09-54-00-948Z-review.md`): 48 pass, 10 partial, 2 fail. must_not broken once (C06 ID: "doesn't always mean there is a problem", a sentence that is in our own FAQ data). No medical advice, results, drug names, other patients' data, nurse notes, exact times or invented prices in any reply.
+  - Found: replies to F07/F09 say "staff will be told", but the escalation feature isn't built yet, so that isn't true today.
+
+## 2026-11-26: FAQ fixes and prompt v4
+- FAQ data (`supabase/004_faq_fixes.sql`, run in Supabase by the developer): removed "does not necessarily mean something is wrong" from speak_to_staff; BPJS answers made full sentences; added "What is BPJS, and will it cover this?" and "What does discharged mean?" (EN + ID). FAQ is now 42 rows.
+- Prompt v4: one kind sentence first for frightening questions (no reassurance); for medicine questions say not to give anything until a nurse says OK; refusals in own words; discharged always adds "check with staff before you leave"; no "right away"/"segera" promises; FAQ text only as full sentences.
+- Full run 3 (`tests/results/chatbot-2026-11-26T10-10-05-316Z.json`): 63 of 63 answered (0 overload errors this time), action correct 63/63, language label correct 63/63.
+- Hand check (Claude Code, `...10-10-05-316Z-review.md`): 59 pass, 4 partial, 0 fail, must_not broken 0 times (run 2: 48 / 10 / 2, must_not broken once). Left: T01 says "ward, HCU or ICU" instead of "ward"; F07 EN grammar slip; F09 ID still says "segera" despite the rule.
