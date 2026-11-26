@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { getTrackInfo } from "@/lib/track";
+import { ChatBox } from "./chat-box";
 
 export default function TrackPage({ params }: { params: Promise<{ token: string }> }) {
   return (
@@ -30,6 +31,7 @@ async function PatientStatus({ params }: { params: Promise<{ token: string }> })
       <p>Status: {info.status ?? "No update yet"}</p>
       <p>Location: {info.location ?? "-"}</p>
       <p>Last updated: {info.minutesSinceUpdate === null ? "-" : `${info.minutesSinceUpdate} min ago`}</p>
+      <ChatBox token={token} />
     </section>
   );
 }
