@@ -10,6 +10,7 @@ import {
   FINAL_STATUSES,
   STALE_MINUTES,
   waitText,
+  ago,
 } from "@/lib/label";
 import { ChatBox } from "./chat-box";
 
@@ -22,7 +23,6 @@ const T = {
   where: { en: "Where", id: "Lokasi" },
   bed: { en: "Bed needed", id: "Tempat tidur" },
   updated: { en: "Last updated", id: "Terakhir diperbarui" },
-  minAgo: { en: "min ago", id: "menit lalu" },
   wait: { en: "Estimated wait for a bed", id: "Perkiraan waktu tunggu tempat tidur" },
   noEstimate: { en: "No estimate available.", id: "Belum ada perkiraan." },
   assumption: {
@@ -111,7 +111,7 @@ export function TrackView({ token, initial }: { token: string; initial: TrackInf
                 </>
               )}
               <dt className="text-neutral-500">{T.updated[lang]}</dt>
-              <dd>{info.minutesSinceUpdate === null ? "-" : `${info.minutesSinceUpdate} ${T.minAgo[lang]}`}</dd>
+              <dd>{info.minutesSinceUpdate === null ? "-" : ago(info.minutesSinceUpdate, lang)}</dd>
             </dl>
 
             {stale && (

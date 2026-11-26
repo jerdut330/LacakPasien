@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ChatAnswer } from "@/lib/chatbot";
-import type { Lang } from "@/lib/label";
+import { ago, type Lang } from "@/lib/label";
 
 type Message =
   | { from: "family"; text: string }
@@ -21,7 +21,6 @@ const T = {
   sources: { en: "Sources", id: "Sumber" },
   status: { en: "Status update", id: "Pembaruan status" },
   from: { en: "from", id: "dari" },
-  minAgo: { en: "min ago", id: "menit lalu" },
   offline: {
     en: "Couldn't reach the chat. Please ask at the ER nurse station.",
     id: "Chat tidak bisa dihubungi. Silakan tanyakan di meja perawat IGD.",
@@ -111,7 +110,7 @@ function Sources({ answer, lang }: { answer: ChatAnswer; lang: Lang }) {
     items.push(
       answer.statusMinutesAgo === null
         ? T.status[lang]
-        : `${T.status[lang]} ${T.from[lang]} ${answer.statusMinutesAgo} ${T.minAgo[lang]}`,
+        : `${T.status[lang]} ${T.from[lang]} ${ago(answer.statusMinutesAgo, lang)}`,
     );
   }
   for (const f of answer.faq) items.push(`FAQ: ${f.question}`);

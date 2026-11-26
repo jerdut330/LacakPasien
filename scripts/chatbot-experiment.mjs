@@ -38,7 +38,12 @@ function waitEstimate(status) {
   if (status.status !== "waiting_bed") return null;
   const w = waits.find((row) => row.bed_type === status.bed_type);
   if (!w) return null;
-  return `${w.min_minutes}-${w.max_minutes} minutes (assumption, not measured)`;
+  // Same shape as the app (lib/label.ts waitText, both languages); test cases have no queue data.
+  const h = (m) => `${m / 60}`;
+  return {
+    en: `About ${h(w.min_minutes)} h to ${h(w.max_minutes)} h more (estimate based on assumptions, not measured).`,
+    id: `Sekitar ${h(w.min_minutes)} jam sampai ${h(w.max_minutes)} jam lagi (perkiraan berdasarkan asumsi, bukan hasil pengukuran).`,
+  };
 }
 
 const responseSchema = {
@@ -95,7 +100,7 @@ const results = [];
 for (const c of cases) {
   const status = {
     ...c.status,
-    updated_minutes_ago: config.updatedMinutesAgo,
+    updated_ago: { en: `${config.updatedMinutesAgo} min ago`, id: `${config.updatedMinutesAgo} menit lalu` },
     wait_estimate: waitEstimate(c.status),
   };
 

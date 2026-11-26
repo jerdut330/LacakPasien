@@ -101,10 +101,10 @@ export function waitText(w: WaitEstimate, lang: Lang): string | null {
 
   if (w.kind === "longer_than_usual") {
     return lang === "en"
-      ? `Already waiting longer than the usual range for ${bed}, so no estimate; please ask the staff. ${ahead}.`
-      : `Sudah menunggu lebih lama dari biasanya untuk ${bed}, jadi tidak ada perkiraan; silakan tanyakan ke petugas. ${ahead}.`;
+      ? `This wait is near or past the end of the usual range for ${bed}, so there is no estimate; please ask the staff. ${ahead}.`
+      : `Waktu tunggu ini sudah mendekati atau melewati batas biasa untuk ${bed}, jadi tidak ada perkiraan; silakan tanyakan ke petugas. ${ahead}.`;
   }
-  const t = (m: number) => formatMinutes(m, lang);
+  const t = (m: number) => duration(m, lang);
   const range =
     lang === "en"
       ? w.minLeft === 0 ? `Up to ${t(w.maxLeft)} more` : `About ${t(w.minLeft)} to ${t(w.maxLeft)} more`
@@ -115,10 +115,17 @@ export function waitText(w: WaitEstimate, lang: Lang): string | null {
 
 const BED_SHORT: Record<string, string> = { ward: "ward", hcu: "HCU", icu: "ICU" };
 
-function formatMinutes(m: number, lang: Lang): string {
-  if (m < 60) return lang === "en" ? `${m} min` : `${m} menit`;
-  const h = (m / 60).toFixed(1).replace(/\.0$/, "");
-  return lang === "en" ? `${h} h` : `${h.replace(".", ",")} jam`;
+// 596 -> "9 h 56 min" / "9 jam 56 menit": easier to grasp than a big minute count.
+export function duration(m: number, lang: Lang): string {
+  const [hUnit, mUnit] = lang === "en" ? ["h", "min"] : ["jam", "menit"];
+  const h = Math.floor(m / 60);
+  const rest = Math.round(m % 60);
+  if (h === 0) return `${rest} ${mUnit}`;
+  return rest === 0 ? `${h} ${hUnit}` : `${h} ${hUnit} ${rest} ${mUnit}`;
+}
+
+export function ago(m: number, lang: Lang): string {
+  return lang === "en" ? `${duration(m, lang)} ago` : `${duration(m, lang)} lalu`;
 }
 
 export const FINAL_STATUSES = ["moved_inpatient", "discharged", "referred"];

@@ -39,8 +39,9 @@ export async function getWaitEstimate(
     .gt("minutes_waiting_for_bed", minutesWaiting + 1);
   if (error || count === null) return null;
 
-  // 4. Already waited longer than the assumed maximum: don't invent a number
-  if (minutesWaiting >= a.max_minutes) {
+  // 4. Past (or within an hour of) the assumed maximum: "up to 4 min more" would read
+  //    like a promise, so say it's longer than usual instead of inventing a number.
+  if (minutesWaiting >= a.max_minutes - 60) {
     return { kind: "longer_than_usual", patientsAhead: count, bedType };
   }
 

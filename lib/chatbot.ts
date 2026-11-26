@@ -1,7 +1,7 @@
 import "server-only";
 import { admin } from "@/lib/supabase/admin";
 import { generateJson } from "@/lib/gemini";
-import { waitText } from "@/lib/label";
+import { waitText, ago } from "@/lib/label";
 import type { TrackInfo } from "@/lib/track";
 
 // Same prompt, settings and output shape as scripts/chatbot-experiment.mjs,
@@ -47,9 +47,13 @@ export async function askChatbot(info: TrackInfo, question: string): Promise<Cha
   const status = {
     status: info.status,
     bed_type: info.bedType,
-    updated_minutes_ago: info.minutesSinceUpdate,
+    // Ready-made text in both languages: the model copies instead of doing time maths or translating.
+    updated_ago:
+      info.minutesSinceUpdate === null
+        ? null
+        : { en: ago(info.minutesSinceUpdate, "en"), id: ago(info.minutesSinceUpdate, "id") },
     // Worked out by plain code (lib/wait.ts); the model only explains it.
-    wait_estimate: waitText(info.wait, "en"),
+    wait_estimate: info.wait ? { en: waitText(info.wait, "en"), id: waitText(info.wait, "id") } : null,
   };
   const faqForModel = faq.map(({ id, topic, language, answer }) => ({ id, topic, language, answer }));
 
