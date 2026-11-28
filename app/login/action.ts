@@ -21,10 +21,11 @@ export async function login(prevState: LoginState, formData: FormData): Promise<
     .eq("id", data.user.id)
     .single();
 
-  // 3. Not a nurse? Log them out and stop
+  // 3. Send each role to its own page. Not a worker? Log them out and stop
+  if (worker?.role === "management") redirect("/manage");
   if (worker?.role !== "nurse") {
     await supabase.auth.signOut();
-    return { error: "This account doesn’t have nurse access." };
+    return { error: "This account doesn’t have staff access." };
   }
 
   redirect("/nurse");

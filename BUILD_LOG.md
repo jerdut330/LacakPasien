@@ -129,3 +129,10 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
 - Fix (Claude Code, at the developer's request), rule 6 in `prompts/chatbot.md`: name only the thing they asked for, with one EN/ID example each for the doctor and the queue; if someone is in pain or suffering, start with one short kind sentence. Still no promise that staff were told.
 - First try (examples only) passed 4/4 but the ID F09 reply mixed both examples into a broken sentence ("...memanggil dokter atau menaikkan antrean lewat chat ini karena dia kesakitan banget") and had no kind word. Second version fixed both.
 - Re-run F07 + F09, EN and ID (`tests/results/chatbot-2026-11-28T12-21-44-058Z.json`): action 4/4, language 4/4; replies checked by hand: name the right thing, kind opener on F09, no promise. The other cases were not re-run (only rule 6 changed); the full run comes with the Dec 1-5 tests.
+
+## 2026-11-28: management page
+- Claude Code wrote, at the developer's request: `app/manage/page.tsx` (read-only: patients waiting per bed type, average boarding time, 10 longest bed waits with "over 4 h" flag, stale updates over 60 min, oldest first), `/manage` added to `proxy.ts` (logged-out -> /login), login sends management accounts to `/manage` (before, login turned away anyone who wasn't a nurse).
+- Decision: nurses can open `/manage` too. Why: RLS already lets every worker read, and the totals hold no extra patient data; one less role check.
+- Decision: boarding time = first `waiting_bed` row -> `moved_inpatient` row per patient, computed in the page from `status_updates`. Plain code, no AI.
+- Limit: Supabase returns at most 1000 rows per query by default; the boarding query reads 165 rows now (counted Nov 28). A real ER would need the average computed in SQL.
+- Checked in the browser on the (stale) seed data: 53 patients in the ER; waiting ward 4 / HCU 12 / ICU 6; average boarding 4 h 54 min over 64 patients; longest waits all flagged (seed is ~2 days old); stale list sorted oldest first; no console errors; logged-out /manage -> 307 to /login. Not yet checked: logging in as manager@lacakpasien.test.

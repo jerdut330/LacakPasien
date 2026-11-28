@@ -23,7 +23,8 @@ export async function proxy(request: NextRequest) {
   // This call renews the login cookie if it is about to expire.
   const { data } = await supabase.auth.getClaims();
 
-  if (!data?.claims && request.nextUrl.pathname.startsWith("/nurse")) {
+  const path = request.nextUrl.pathname;
+  if (!data?.claims && (path.startsWith("/nurse") || path.startsWith("/manage"))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -31,6 +32,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Only nurse and login pages need this. The family page (/track) skips it.
-  matcher: ["/nurse/:path*", "/login"],
+  // Only staff and login pages need this. The family page (/track) skips it.
+  matcher: ["/nurse/:path*", "/manage/:path*", "/login"],
 };
