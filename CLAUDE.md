@@ -11,8 +11,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - No test runner is set up yet. The Dec 1-5 tests will need one added.
 - `node --env-file=.env.local scripts/chatbot-experiment.mjs [T01 F04 ...]`: runs the chatbot test cases (all, or the given ids) through Gemini with `prompts/chatbot.md` + `prompts/chatbot.config.json`, saves `tests/results/chatbot-<time>.json`. `pass` checks only the action; 503/timeouts are counted as errors, not fails. A full run is ~63 calls: mind the free-tier daily limit.
 - `tests/chatbot-questions.*`: the developer's chatbot test cases (same cases as `.md`, `.txt` and `.json`; the JSON has `expected` answer/refuse/escalate, `must_include`, `must_not` per case, for the Nov 22 prompt-experiment script to read).
+- `node --env-file=.env.local scripts/extract-experiment.mjs [E01 E13 ...]`: runs type-mode sentences from `tests/extraction-sentences.json` through `prompts/extract.md` + `prompts/extract.config.json`, scores status/bed_type/location by exact match (null = not stated) and note only as present/absent; saves `tests/results/extract-<time>.json`.
+- Model settings (model, fallbackModel, temperature, timeouts, delays) live in `prompts/*.config.json`, never in code.
 
-Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+Env vars: copy `.env.example` to `.env.local` (gitignored) and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`.
+
+`README.md` is still the create-next-app template; it gets rewritten in Dec 6-9 (limits, AI disclosure).
 
 ## Code architecture
 - Next.js 16 with `cacheComponents` and `partialPrefetching` on (`next.config.ts`; `experimental.agentFeedback` is also on, leave it). Tailwind v4 is loaded via a Turbopack CSS rule, not PostCSS. Import alias `@/*` = repo root.
@@ -107,10 +111,8 @@ English-first UI with a Bahasa Indonesia option. Type mode and the chatbot work 
 - Before submitting: demo link works, screenshots show the real prototype, credits complete, no secrets, fallback video (the free LLM tier may fail during judging).
 
 ## Plan
-- Nov 21: thin slice: nurse login, tap-mode status update, family page /track/[token]. DONE Nov 19. Tap-mode leftovers for polish week: Undo, friendly EN/ID status labels, bed type shown only when needed, likely next status first, stale-update flag, styling.
-- Before the chatbot experiment (test questions DONE, in `tests/`): developer writes ~20 test questions (typical / confusing / failure, EN + ID) with the expected behaviour, picks a free-tier LLM and puts its key in `.env.local` (name only in `.env.example`), and starts `BUILD_LOG.md`. Seed data is stale: reseed before realistic testing and before the demo.
-- Nov 22: chatbot prompt experiment: ~20 sample questions in a small script, before any chat UI.
-- Nov 23-30: type mode (AI field extraction + confirm card), chatbot with sources, wait-time estimate + AI explanation, family page polish. Stretch: "needs a human" alert. Feature freeze Nov 30.
+- DONE (by Nov 26, details in `BUILD_LOG.md`): thin slice; tap-mode polish (likely next first, bed buttons, 5 s Undo, stale flag); chatbot test cases + prompt experiment (Gemini); type mode + extraction experiment; chatbot on the family page with sources; wait-time estimate (code-made sentence on the page, AI explanation only via the chatbot, to save free-tier calls); family page polish; QR family link.
+- Left before feature freeze Nov 30: stretch "needs a human" alert; management page (build last). Seed data goes stale: reseed before realistic testing and before the demo.
 - Dec 1-5: tests (field extraction accuracy on 60-100 typed sentences in EN, ID and mixed; chatbot on 80-100 questions: typical, confusing and failure cases; wait-time logic test; escalation accuracy if built), 5-8 person trial (time per update, tap vs type).
 - Dec 6-9: video (doubles as fallback demo), README with limits + AI disclosure, Devpost page. Submit Dec 9 (portal closes Dec 10 US Eastern).
 
