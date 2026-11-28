@@ -115,3 +115,11 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
 - Decision: Undo waits 5 s BEFORE saving instead of deleting a saved row. Why: status_updates is append-only and nurses have no delete permission; families see the update 5 s later, which is fine.
 - Nurse list and patient page styled for a phone; list shows "stale" for updates older than 60 min. Staff screens show enum words with spaces ("waiting bed"); family screens use the friendly EN/ID labels.
 - Tested in the browser (phone size) as the nurse: tap "transferring" -> Undo -> nothing saved (checked in the database); tap again and wait -> one row saved (status transferring, location kept as observation, source manual) and back to the list.
+
+## 2026-11-28: "needs a human" alert (stretch)
+- Claude Code wrote, at the developer's request: `supabase/006_escalations.sql` (table `escalations`: patient, family question, chatbot reply, time), `lib/escalation.ts` (`saveEscalation`), the insert in `app/track/[token]/chat/route.ts` when the chatbot's action is `escalate`, and the alert box on `app/nurse/page.tsx`.
+- Decision: no insert policy on `escalations`. Only the chat route writes, with the service role key, after the token check. Why: a logged-in user can't add fake alerts, and anon still has no access.
+- Decision: an alert stays open until a nurse saves a newer status for that patient (tapping "still <status>" counts). No "handled" column. Why: the table stays append-only like `status_updates`, and nurses need no update permission.
+- Decision: the patient id is looked up separately in `saveEscalation`, not added to `TrackInfo`. Why: `TrackInfo` is sent to the family page, which gets first name and status fields only.
+- Tested: asked "I want to talk to the doctor in person, please" on an active patient's link -> action escalate, row saved with the question and reply. The nurse page showed the red "Family wants to talk to staff" box and a "family asking" tag on the patient. Tapped "still waiting bed (HCU)" -> after the 5 s Undo the alert was gone. One real question (one Gemini call), no formal accuracy test yet (Dec 1-5 plan: escalation accuracy).
+- Found: the chatbot's escalate reply read "I cannot do that yourself. Please tell the nurse..." (awkward wording, prompt fix to do).
