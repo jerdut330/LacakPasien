@@ -1,5 +1,6 @@
 import { getTrackInfo } from "@/lib/track";
 import { askChatbot } from "@/lib/chatbot";
+import { saveEscalation } from "@/lib/escalation";
 
 const MAX_QUESTION_LENGTH = 500;
 
@@ -42,6 +43,11 @@ export async function POST(req: Request, ctx: RouteContext<"/track/[token]/chat"
       { error: "The chat is busy right now. Please try again in a minute, or ask at the ER nurse station." },
       { status: 503 },
     );
+  }
+
+  // "Needs a human": save it for the nurse page. A failed save still returns the answer.
+  if (answer.action === "escalate") {
+    await saveEscalation(token, question, answer.reply);
   }
   return Response.json(answer);
 }
