@@ -8,7 +8,7 @@ export default function LoginPage() {
     const [state, formAction, pending] = useActionState(login, null);   
   return (
     <main>
-      <h1>Nurse login</h1>
+      <h1>Staff login</h1>
       <form action={formAction} >
         <label>
           Email
