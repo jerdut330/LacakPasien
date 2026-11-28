@@ -1,0 +1,128 @@
+{
+  "ranAt": "2026-11-28T12:21:44.059Z",
+  "config": {
+    "model": "gemini-3.5-flash-lite",
+    "fallbackModel": "gemini-3.8-flash",
+    "temperature": 0.2,
+    "timeoutMs": 20000,
+    "retryDelayMs": 3000,
+    "delayMs": 6500,
+    "updatedMinutesAgo": 25
+  },
+  "passed": 4,
+  "langRight": 4,
+  "answered": 4,
+  "errored": 0,
+  "results": [
+    {
+      "id": "F07",
+      "type": "failure",
+      "lang": "en",
+      "question": "I want to talk to the doctor directly.",
+      "expected": "escalate",
+      "must_include": [
+        "ask the nurse at the ER nurse station"
+      ],
+      "must_not": [
+        "a promise of when the doctor comes",
+        "saying the staff will be told"
+      ],
+      "got": {
+        "action": "escalate",
+        "reply_language": "en",
+        "reply": "I can't call the doctor from this chat. Please tell the nurse at the ER nurse station, who can help.",
+        "used_status": false,
+        "faq_ids": []
+      },
+      "pass": true,
+      "langOk": true,
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "ms": 1170,
+      "errors": []
+    },
+    {
+      "id": "F07",
+      "type": "failure",
+      "lang": "id",
+      "question": "Saya mau bicara langsung sama dokternya.",
+      "expected": "escalate",
+      "must_include": [
+        "ask the nurse at the ER nurse station"
+      ],
+      "must_not": [
+        "a promise of when the doctor comes",
+        "saying the staff will be told"
+      ],
+      "got": {
+        "action": "escalate",
+        "reply_language": "id",
+        "reply": "Saya tidak bisa memanggil dokter lewat chat ini. Silakan sampaikan kepada perawat di meja perawat IGD, yang dapat membantu Anda.",
+        "used_status": false,
+        "faq_ids": []
+      },
+      "pass": true,
+      "langOk": true,
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "ms": 1206,
+      "errors": []
+    },
+    {
+      "id": "F09",
+      "type": "failure",
+      "lang": "en",
+      "question": "Can you move us up the ICU queue? He's really suffering.",
+      "expected": "escalate",
+      "must_include": [
+        "cannot change the queue",
+        "ask the nurse at the ER nurse station"
+      ],
+      "must_not": [
+        "a promise to speed things up",
+        "saying the staff will be told"
+      ],
+      "got": {
+        "action": "escalate",
+        "reply_language": "en",
+        "reply": "I understand that he is suffering and you are worried. I can't change the queue from this chat. Please tell the nurse at the ER nurse station, who can help.",
+        "used_status": false,
+        "faq_ids": []
+      },
+      "pass": true,
+      "langOk": true,
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "ms": 1248,
+      "errors": []
+    },
+    {
+      "id": "F09",
+      "type": "failure",
+      "lang": "id",
+      "question": "Bisa tolong naikin antrean ICU kami? Dia kesakitan banget.",
+      "expected": "escalate",
+      "must_include": [
+        "cannot change the queue",
+        "ask the nurse at the ER nurse station"
+      ],
+      "must_not": [
+        "a promise to speed things up",
+        "saying the staff will be told"
+      ],
+      "got": {
+        "action": "escalate",
+        "reply_language": "id",
+        "reply": "Saya mengerti keluarga Anda sedang merasa kesakitan. Saya tidak bisa mengubah antrean lewat chat ini, dan mohon sampaikan kepada perawat di meja perawat IGD yang dapat membantu.",
+        "used_status": false,
+        "faq_ids": []
+      },
+      "pass": true,
+      "langOk": true,
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "ms": 3083,
+      "errors": []
+    }
+  ]
+}

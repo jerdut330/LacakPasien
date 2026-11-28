@@ -123,3 +123,9 @@ AI disclosure: Claude Code (Anthropic) is used as a guide and helper. Entries sa
 - Decision: the patient id is looked up separately in `saveEscalation`, not added to `TrackInfo`. Why: `TrackInfo` is sent to the family page, which gets first name and status fields only.
 - Tested: asked "I want to talk to the doctor in person, please" on an active patient's link -> action escalate, row saved with the question and reply. The nurse page showed the red "Family wants to talk to staff" box and a "family asking" tag on the patient. Tapped "still waiting bed (HCU)" -> after the 5 s Undo the alert was gone. One real question (one Gemini call), no formal accuracy test yet (Dec 1-5 plan: escalation accuracy).
 - Found: the chatbot's escalate reply read "I cannot do that yourself. Please tell the nurse..." (awkward wording, prompt fix to do).
+
+## 2026-11-28: escalate reply wording (prompt rule 6)
+- Problem: the escalate reply read "I cannot do that yourself. Please tell the nurse..." because rule 6 said "say you cannot do that yourself" and the model copied it word for word.
+- Fix (Claude Code, at the developer's request), rule 6 in `prompts/chatbot.md`: name only the thing they asked for, with one EN/ID example each for the doctor and the queue; if someone is in pain or suffering, start with one short kind sentence. Still no promise that staff were told.
+- First try (examples only) passed 4/4 but the ID F09 reply mixed both examples into a broken sentence ("...memanggil dokter atau menaikkan antrean lewat chat ini karena dia kesakitan banget") and had no kind word. Second version fixed both.
+- Re-run F07 + F09, EN and ID (`tests/results/chatbot-2026-11-28T12-21-44-058Z.json`): action 4/4, language 4/4; replies checked by hand: name the right thing, kind opener on F09, no promise. The other cases were not re-run (only rule 6 changed); the full run comes with the Dec 1-5 tests.
